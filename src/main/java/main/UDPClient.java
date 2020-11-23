@@ -19,60 +19,77 @@ import static java.nio.channels.SelectionKey.OP_READ;
 
 public class UDPClient {
 
-
+    int packetType = 0; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
 
     private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
+
     private static void runClient(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
+
 
         try(DatagramChannel channel = DatagramChannel.open()){
 
-            String outputPayload =  createOutputPayload();  //from get or post
-            byte[] byteArray = outputPayload.getBytes();
-            int i = 0;
+            Object[] objectArray = createOutputPayload();
+
+            String outputPayload = (String) objectArray[0];  //from get or post
+            int packetType = (int) objectArray[1]; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
             int sequenceNumber = 0;
-            byte[] packetByteOutput = new byte[4];
+            byte[] packetByteOutput = new byte[1013];
             List<byte[]> bytelist = new ArrayList<>();
 
-            for (byte b : byteArray)
-            {
-                if (i < 4)
-                {
-                    packetByteOutput[i] = b;
-                    i++;
-                }
-                else    //when i reaches 4
-                {
-                    bytelist.add(packetByteOutput);
 
-                    //reset i and packetByte
-                    i = 0;
-                    packetByteOutput = new byte[4];
-                    packetByteOutput[i] = b;
-                }
-            }
-
-            // if there is a leftover of size < 4: put in list
-            if (byteArray.length % 4 != 0)
-            {
-                bytelist.add(packetByteOutput);
-            }
-
-            //send packets
-            for (byte[] b: bytelist)
+            //SENDING SYN
+            if (packetType == 1)
             {
                 Packet p = new Packet.Builder()
-                        .setType(0)
+                        .setType(packetType)
                         .setSequenceNumber(sequenceNumber)
                         .setPortNumber(serverAddr.getPort())
                         .setPeerAddress(serverAddr.getAddress())
-                        .setPayload(b)
                         .create();
                 channel.send(p.toBuffer(), routerAddr);
-                sequenceNumber ++;
+                sequenceNumber++;
             }
+            //sending data
+            else if (packetType == 0) {
+                byte[] byteArray = outputPayload.getBytes();
+                int i = 0;
 
 
+                for (byte b : byteArray) {
+                    if (i < 1013) {
+                        packetByteOutput[i] = b;
+                        i++;
+                    } else    //when i reaches 4
+                    {
+                        bytelist.add(packetByteOutput);
+
+                        //reset i and packetByte
+                        i = 0;
+                        packetByteOutput = new byte[1013];
+                        packetByteOutput[i] = b;
+                    }
+                }
+
+                // if there is a leftover of size < 4: put in list
+                if (byteArray.length % 1013 != 0) {
+                    bytelist.add(packetByteOutput);
+                }
+
+
+                //send packets
+                for (byte[] b : bytelist) {
+                    Packet p = new Packet.Builder()
+                            .setType(packetType)
+                            .setSequenceNumber(sequenceNumber)
+                            .setPortNumber(serverAddr.getPort())
+                            .setPeerAddress(serverAddr.getAddress())
+                            .setPayload(b)
+                            .create();
+                    channel.send(p.toBuffer(), routerAddr);
+                    sequenceNumber++;
+                }
+            }
 
             logger.info("Sending \"{}\" to router at {}", outputPayload, routerAddr);
 
@@ -102,7 +119,26 @@ public class UDPClient {
             keys.clear();
         }
     }
-    public static String GET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
+    public static Object[] SYN()
+    {
+        return new Object[] {"",1};
+    }
+
+    public static Object[] ACK()
+    {
+        return new Object[] {"",2};
+    }
+
+    public static Object[] SYNACK()
+    {
+        return new Object[] {"",3};
+    }
+
+    public static Object[] NAK()
+    {
+        return new Object[] {"",4};
+    }
+    public static Object[] GET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
 
         String outputString = "";
 //
@@ -141,8 +177,11 @@ public class UDPClient {
 
 
         outputString += "\r\n";
+        Object[] objectArray = new Object[2];
+        objectArray[0] = outputString;
+        objectArray[1] = 0;
 
-        return outputString;
+        return objectArray;
 
 
     }
@@ -230,9 +269,9 @@ public class UDPClient {
 
     }
 
-    public static String createOutputPayload()
+    public static Object[] createOutputPayload()
     {
-        return "";
+        return new Object[2];
     }
 
 }
