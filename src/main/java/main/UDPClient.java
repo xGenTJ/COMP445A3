@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -23,75 +24,24 @@ public class UDPClient {
 
     private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
-
-    private static void runClient(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
-
-
+    public static long threeWayHandShake(SocketAddress routerAddr, InetSocketAddress serverAddr) throws Exception
+    {
         try(DatagramChannel channel = DatagramChannel.open()){
 
-            Object[] objectArray = createOutputPayload();
-
-            String outputPayload = (String) objectArray[0];  //from get or post
-            int packetType = (int) objectArray[1]; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
-            int sequenceNumber = 0;
-            byte[] packetByteOutput = new byte[1013];
             List<byte[]> bytelist = new ArrayList<>();
-
-
+            long responseSequence = 0;
             //SENDING SYN
-            if (packetType == 1)
-            {
-                Packet p = new Packet.Builder()
-                        .setType(packetType)
-                        .setSequenceNumber(sequenceNumber)
-                        .setPortNumber(serverAddr.getPort())
-                        .setPeerAddress(serverAddr.getAddress())
-                        .create();
-                channel.send(p.toBuffer(), routerAddr);
-                sequenceNumber++;
-            }
-            //sending data
-            else if (packetType == 0) {
-                byte[] byteArray = outputPayload.getBytes();
-                int i = 0;
+
+            Packet p = new Packet.Builder()
+                    .setType(1)
+                    .setSequenceNumber(0)
+                    .setPortNumber(serverAddr.getPort())
+                    .setPeerAddress(serverAddr.getAddress())
+                    .create();
+            channel.send(p.toBuffer(), routerAddr);
 
 
-                for (byte b : byteArray) {
-                    if (i < 1013) {
-                        packetByteOutput[i] = b;
-                        i++;
-                    } else    //when i reaches 4
-                    {
-                        bytelist.add(packetByteOutput);
-
-                        //reset i and packetByte
-                        i = 0;
-                        packetByteOutput = new byte[1013];
-                        packetByteOutput[i] = b;
-                    }
-                }
-
-                // if there is a leftover of size < 4: put in list
-                if (byteArray.length % 1013 != 0) {
-                    bytelist.add(packetByteOutput);
-                }
-
-
-                //send packets
-                for (byte[] b : bytelist) {
-                    Packet p = new Packet.Builder()
-                            .setType(packetType)
-                            .setSequenceNumber(sequenceNumber)
-                            .setPortNumber(serverAddr.getPort())
-                            .setPeerAddress(serverAddr.getAddress())
-                            .setPayload(b)
-                            .create();
-                    channel.send(p.toBuffer(), routerAddr);
-                    sequenceNumber++;
-                }
-            }
-
-            logger.info("Sending \"{}\" to router at {}", outputPayload, routerAddr);
+            logger.info("Sending SYN to router at {}" , routerAddr);
 
             // Try to receive a packet within timeout.
             channel.configureBlocking(false);
@@ -101,9 +51,9 @@ public class UDPClient {
             selector.select(5000);
 
             Set<SelectionKey> keys = selector.selectedKeys();
-            if(keys.isEmpty()){
-                logger.error("No response after timeout");
-                return;
+            while (keys.isEmpty()){
+                channel.send(p.toBuffer(), routerAddr);
+                Thread.sleep(1000);
             }
 
             // We just want a single response.
@@ -111,34 +61,119 @@ public class UDPClient {
             SocketAddress router = channel.receive(buf);
             buf.flip();
             Packet resp = Packet.fromBuffer(buf);
-            logger.info("Packet: {}", resp);
-            logger.info("Router: {}", router);
+//            logger.info("Packet: {}", resp);
+//            logger.info("Router: {}", router);
             String payload = new String(resp.getPayload(), StandardCharsets.UTF_8);
-            logger.info("Payload: {}",  payload);
+//            logger.info("Payload: {}",  payload);
 
-            keys.clear();
+            if (resp.getType() != 2)
+            {
+                System.out.println("DID NOT RECEIVE A SYN-ACK");
+
+            }
+            else
+            {
+                System.out.println("SYN-ACK RECEIVED");
+                responseSequence = resp.getSequenceNumber();
+                System.out.println("Sequence Number from Server: " + resp.getSequenceNumber());
+
+                keys.clear();
+                channel.configureBlocking(true);
+
+                Packet ACKPacket = new Packet.Builder()
+                        .setType(3)
+                        .setSequenceNumber(responseSequence + 1)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .create();
+
+                channel.send(p.toBuffer(), routerAddr);
+            }
+
+            return(responseSequence + 1);
         }
     }
-    public static Object[] SYN()
+
+    public static void sendDataPacket(SocketAddress routerAddr, InetSocketAddress serverAddr, long sequenceNumber) throws IOException
     {
-        return new Object[] {"",1};
+        try(DatagramChannel channel = DatagramChannel.open()){
+
+            String outputPayload =  createOutputPayload();  //from get or post
+            int packetType = 0; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
+            byte[] packetByteOutput = new byte[1013];
+            List<byte[]> bytelist = new ArrayList<>();
+
+            //sending data
+            byte[] byteArray = outputPayload.getBytes();
+            int i = 0;
+
+            for (byte b : byteArray) {
+                if (i < 1013) {
+                    packetByteOutput[i] = b;
+                    i++;
+                } else    //when i reaches 4
+                {
+                    bytelist.add(packetByteOutput);
+
+                    //reset i and packetByte
+                    i = 0;
+                    packetByteOutput = new byte[1013];
+                    packetByteOutput[i] = b;
+                }
+            }
+
+            // if there is a leftover of size < 4: put in list
+            if (byteArray.length % 1013 != 0) {
+                bytelist.add(packetByteOutput);
+            }
+
+
+            //send packets
+            for (byte[] b : bytelist) {
+                Packet p = new Packet.Builder()
+                        .setType(packetType)
+                        .setSequenceNumber(sequenceNumber)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(b)
+                        .create();
+                channel.send(p.toBuffer(), routerAddr);
+                sequenceNumber++;
+            }
+
+            logger.info("Sending \"{}\" to router at {}", outputPayload, routerAddr);
+
+        }
     }
 
-    public static Object[] ACK()
-    {
-        return new Object[] {"",2};
+    private static String recvPacket(DatagramChannel channel) throws IOException {
+
+        // Try to receive a packet within timeout.
+        channel.configureBlocking(false);
+        Selector selector = Selector.open();
+        channel.register(selector, OP_READ);
+        logger.info("Waiting for the response");
+        selector.select(5000);
+
+        Set<SelectionKey> keys = selector.selectedKeys();
+        if(keys.isEmpty()){
+            logger.error("No response after timeout");
+            return "";
+        }
+        // We just want a single response.
+        ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        SocketAddress router = channel.receive(buf);
+        buf.flip();
+        Packet resp = Packet.fromBuffer(buf);
+//            logger.info("Packet: {}", resp);
+//            logger.info("Router: {}", router);
+//            logger.info("Payload: {}",  payload);
+        String payload = new String(resp.getPayload(), StandardCharsets.UTF_8);
+        keys.clear();
+        return payload;
     }
 
-    public static Object[] SYNACK()
-    {
-        return new Object[] {"",3};
-    }
-
-    public static Object[] NAK()
-    {
-        return new Object[] {"",4};
-    }
-    public static Object[] GET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
+    public static Object[] createGET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
 
         String outputString = "";
 //
@@ -186,7 +221,7 @@ public class UDPClient {
 
     }
 
-    public static String POST(String path, LinkedHashMap<String,String> headers, String body, String address, String query, boolean fileServer) throws Exception{
+    public static String createPOST(String path, LinkedHashMap<String,String> headers, String body, String address, String query, boolean fileServer) throws Exception{
 
         String outputString = "";
 
@@ -236,6 +271,7 @@ public class UDPClient {
 
     public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
+
         parser.accepts("router-host", "Router hostname")
                 .withOptionalArg()
                 .defaultsTo("localhost");
@@ -265,13 +301,19 @@ public class UDPClient {
         SocketAddress routerAddress = new InetSocketAddress(routerHost, routerPort);
         InetSocketAddress serverAddress = new InetSocketAddress(serverHost, serverPort);
 
-        runClient(routerAddress, serverAddress);
+        long sequenceNumber = 0;
+        try {
+            sequenceNumber = threeWayHandShake(routerAddress, serverAddress);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        sendDataPacket(routerAddress, serverAddress, sequenceNumber);
 
     }
 
-    public static Object[] createOutputPayload()
+    public static String createOutputPayload()
     {
-        return new Object[2];
+        return "";
     }
 
 }

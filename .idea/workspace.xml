@@ -25,7 +25,6 @@
     <list default="true" id="933c7d55-3ab0-452a-82c5-24dda4bcd800" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,6 +85,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+      <option name="arquillianRunConfiguration">
+        <value>
+          <option name="containerStateName" value="" />
+        </value>
+      </option>
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Application.test" />
@@ -106,6 +116,8 @@
       <workItem from="1606090675458" duration="61000" />
       <workItem from="1606090744640" duration="7441000" />
       <workItem from="1606142132698" duration="11000" />
+      <workItem from="1606175337434" duration="4191000" />
+      <workItem from="1606253357668" duration="349000" />
     </task>
     <servers />
   </component>
