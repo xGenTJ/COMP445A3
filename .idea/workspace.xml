@@ -23,14 +23,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="933c7d55-3ab0-452a-82c5-24dda4bcd800" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__info_picocli_picocli_4_5_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_json_json_20200518.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/main/Packet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/Packet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/udp-echo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/udp-echo.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
