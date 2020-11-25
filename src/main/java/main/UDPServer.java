@@ -2,13 +2,11 @@ package main;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,7 +14,11 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
+import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Scanner;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 
@@ -388,15 +390,15 @@ public class UDPServer {
 
         System.out.println(response);
 
-        wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        System.out.println("SENDING RESPONSE...");
-        wr.write(response);
-
-        if (returnBody.trim().length() > 0) {
-            wr.write( returnBody);
-        }
-
-        wr.flush();
-        wr.close();
+//        wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+//        System.out.println("SENDING RESPONSE...");
+//        wr.write(response);
+//
+//        if (returnBody.trim().length() > 0) {
+//            wr.write( returnBody);
+//        }
+//
+//        wr.flush();
+//        wr.close();
     }
 }
