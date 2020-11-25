@@ -20,25 +20,23 @@ import static java.nio.channels.SelectionKey.OP_READ;
 
 public class UDPClient {
 
-    int packetType = 0; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
 
     private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
-    public static long threeWayHandShake(SocketAddress routerAddr, InetSocketAddress serverAddr) throws Exception
+    public static long threeWayHandShake(SocketAddress routerAddr, InetSocketAddress serverAddr, long numberOfPackets) throws Exception
     {
         try(DatagramChannel channel = DatagramChannel.open()){
 
-            List<byte[]> bytelist = new ArrayList<>();
             long responseSequence = 0;
             //SENDING SYN
 
-            Packet p = new Packet.Builder()
+            Packet SYNPack = new Packet.Builder()
                     .setType(1)
                     .setSequenceNumber(0)
                     .setPortNumber(serverAddr.getPort())
                     .setPeerAddress(serverAddr.getAddress())
                     .create();
-            channel.send(p.toBuffer(), routerAddr);
+            channel.send(SYNPack.toBuffer(), routerAddr);
 
 
             logger.info("Sending SYN to router at {}" , routerAddr);
@@ -52,7 +50,7 @@ public class UDPClient {
 
             Set<SelectionKey> keys = selector.selectedKeys();
             while (keys.isEmpty()){
-                channel.send(p.toBuffer(), routerAddr);
+                channel.send(SYNPack.toBuffer(), routerAddr);
                 Thread.sleep(1000);
             }
 
@@ -77,76 +75,108 @@ public class UDPClient {
                 responseSequence = resp.getSequenceNumber();
                 System.out.println("Sequence Number from Server: " + resp.getSequenceNumber());
 
+                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+                buffer.putLong(numberOfPackets);
+
                 keys.clear();
                 channel.configureBlocking(true);
+
 
                 Packet ACKPacket = new Packet.Builder()
                         .setType(3)
                         .setSequenceNumber(responseSequence + 1)
                         .setPortNumber(serverAddr.getPort())
                         .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(buffer.array())
                         .create();
 
-                channel.send(p.toBuffer(), routerAddr);
+                channel.send(ACKPacket.toBuffer(), routerAddr);
             }
 
             return(responseSequence + 1);
         }
     }
 
-    public static void sendDataPacket(SocketAddress routerAddr, InetSocketAddress serverAddr, long sequenceNumber) throws IOException
-    {
+    public static void sendDataPacket(SocketAddress routerAddr, InetSocketAddress serverAddr, List<byte[]> outputByteList) throws IOException {
         try(DatagramChannel channel = DatagramChannel.open()){
 
-            String outputPayload =  createOutputPayload();  //from get or post
+            long sequenceNumber = 1;
             int packetType = 0; //0 -> data, 1 -> SYN, 2 -> SYN-ACK, 3 - ACK 4- NAK
-            byte[] packetByteOutput = new byte[1013];
-            List<byte[]> bytelist = new ArrayList<>();
+            int index = 0;
+            List<Packet> packetList = new ArrayList();
+            List<Packet> window = new ArrayList();
+            List<Long> UNACKNumbers = new ArrayList();
+            int maxWindowSize = 2;
+            int availableWindowSize = 2;
 
-            //sending data
-            byte[] byteArray = outputPayload.getBytes();
-            int i = 0;
+            //while not done sending
+            while (true) {
+                //create a list of packets to send
+                for (byte[] b : outputByteList) {
 
-            for (byte b : byteArray) {
-                if (i < 1013) {
-                    packetByteOutput[i] = b;
-                    i++;
-                } else    //when i reaches 4
-                {
-                    bytelist.add(packetByteOutput);
+                    packetList.add(new Packet.Builder()
+                            .setType(packetType)
+                            .setSequenceNumber(sequenceNumber)
+                            .setPortNumber(serverAddr.getPort())
+                            .setPeerAddress(serverAddr.getAddress())
+                            .setPayload(b)
+                            .create());
 
-                    //reset i and packetByte
-                    i = 0;
-                    packetByteOutput = new byte[1013];
-                    packetByteOutput[i] = b;
                 }
+
+                //load packets in window
+                while (availableWindowSize > 0) {
+                    window.add(packetList.get(index));
+                    index++;
+                    availableWindowSize--;
+                }
+
+                //send all the packets in window
+                for (Packet p : window) {
+                    channel.send(p.toBuffer(), routerAddr);
+                    UNACKNumbers.add(p.getSequenceNumber());
+                }
+
+                logger.info("Sending packet sequence number \"{}\" to router at {}", sequenceNumber, routerAddr);
+                logger.info("Waiting for the response");
+                Selector selector = Selector.open();
+                channel.configureBlocking(false);
+                channel.register(selector, OP_READ);
+                selector.select(5000);
+                Set<SelectionKey> keys = selector.selectedKeys();
+
+                // if no response came thru
+                if (keys.isEmpty()) {
+                    continue;
+                }
+                //TODO implement selective repeat here
+
+                //get ACK for first data packet and remove from the unacked list
+                Packet responsePacket = recvPacket(channel);
+                long firstUnacked = UNACKNumbers.get(0);
+                long ACKsequenceNumber = responsePacket.getSequenceNumber();
+
+                //if the first unacked number is acked, increase window size and send a new packet
+                if (ACKsequenceNumber == firstUnacked)
+                {
+                    UNACKNumbers.remove(ACKsequenceNumber);
+
+                    //available window size is equal to max window size minus the number of UNACK'd packets
+                    availableWindowSize = maxWindowSize - UNACKNumbers.size();
+                }
+
+                //if the first unacked number is not acked, loop until it is
+                else
+                {
+                    UNACKNumbers.remove(ACKsequenceNumber);
+                }
+
             }
-
-            // if there is a leftover of size < 4: put in list
-            if (byteArray.length % 1013 != 0) {
-                bytelist.add(packetByteOutput);
-            }
-
-
-            //send packets
-            for (byte[] b : bytelist) {
-                Packet p = new Packet.Builder()
-                        .setType(packetType)
-                        .setSequenceNumber(sequenceNumber)
-                        .setPortNumber(serverAddr.getPort())
-                        .setPeerAddress(serverAddr.getAddress())
-                        .setPayload(b)
-                        .create();
-                channel.send(p.toBuffer(), routerAddr);
-                sequenceNumber++;
-            }
-
-            logger.info("Sending \"{}\" to router at {}", outputPayload, routerAddr);
 
         }
     }
 
-    private static String recvPacket(DatagramChannel channel) throws IOException {
+    private static Packet recvPacket(DatagramChannel channel) throws IOException {
 
         // Try to receive a packet within timeout.
         channel.configureBlocking(false);
@@ -170,10 +200,10 @@ public class UDPClient {
 //            logger.info("Payload: {}",  payload);
         String payload = new String(resp.getPayload(), StandardCharsets.UTF_8);
         keys.clear();
-        return payload;
+        return resp;
     }
 
-    public static Object[] createGET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
+    public static List<byte[]> createGET(String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer) throws Exception {
 
         String outputString = "";
 //
@@ -209,19 +239,42 @@ public class UDPClient {
 
             outputString = "GET " + path + " HTTP/1.0\r\n";
         }
-
-
         outputString += "\r\n";
-        Object[] objectArray = new Object[2];
-        objectArray[0] = outputString;
-        objectArray[1] = 0;
 
-        return objectArray;
+
+        byte[] packetByteOutput = new byte[1013];
+        List<byte[]> bytelist = new ArrayList<>();
+
+        //sending data
+        byte[] byteArray = outputString.getBytes();
+        int i = 0;
+
+        for (byte b : byteArray) {
+            if (i < 1013) {
+                packetByteOutput[i] = b;
+                i++;
+            } else    //when i reaches 4
+            {
+                bytelist.add(packetByteOutput);
+
+                //reset i and packetByte
+                i = 0;
+                packetByteOutput = new byte[1013];
+                packetByteOutput[i] = b;
+            }
+        }
+
+        // if there is a leftover of size < 4: put in list
+        if (byteArray.length % 1013 != 0) {
+            bytelist.add(packetByteOutput);
+        }
+
+        return bytelist;
 
 
     }
 
-    public static String createPOST(String path, LinkedHashMap<String,String> headers, String body, String address, String query, boolean fileServer) throws Exception{
+    public static List<byte[]> createPOST(String path, LinkedHashMap<String,String> headers, String body, String address, String query, boolean fileServer) throws Exception{
 
         String outputString = "";
 
@@ -264,7 +317,34 @@ public class UDPClient {
         //send headers
         outputString += "\r\n" + body + "\r\n";
 
-        return outputString;
+        byte[] packetByteOutput = new byte[1013];
+        List<byte[]> bytelist = new ArrayList<>();
+
+        //sending data
+        byte[] byteArray = outputString.getBytes();
+        int i = 0;
+
+        for (byte b : byteArray) {
+            if (i < 1013) {
+                packetByteOutput[i] = b;
+                i++;
+            } else    //when i reaches 4
+            {
+                bytelist.add(packetByteOutput);
+
+                //reset i and packetByte
+                i = 0;
+                packetByteOutput = new byte[1013];
+                packetByteOutput[i] = b;
+            }
+        }
+
+        // if there is a leftover of size < 4: put in list
+        if (byteArray.length % 1013 != 0) {
+            bytelist.add(packetByteOutput);
+        }
+
+        return bytelist;
 
     }
 
@@ -302,12 +382,16 @@ public class UDPClient {
         InetSocketAddress serverAddress = new InetSocketAddress(serverHost, serverPort);
 
         long sequenceNumber = 0;
+        List<byte[]> bytelist = createGET();
+        long numberOfPackets = createGET().size();
+
+
         try {
-            sequenceNumber = threeWayHandShake(routerAddress, serverAddress);
+            sequenceNumber = threeWayHandShake(routerAddress, serverAddress, numberOfPackets);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        sendDataPacket(routerAddress, serverAddress, sequenceNumber);
+        sendDataPacket(routerAddress, serverAddress, bytelist);
 
     }
 
