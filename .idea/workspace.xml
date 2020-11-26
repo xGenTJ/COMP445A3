@@ -22,6 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
+<<<<<<< Updated upstream
     <list default="true" id="933c7d55-3ab0-452a-82c5-24dda4bcd800" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/main/Server.java" afterDir="false" />
@@ -36,6 +37,9 @@
       <change beforePath="$PROJECT_DIR$/target/classes/main/UDPServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/main/UDPServer.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/main/runner.class" beforeDir="false" />
     </list>
+=======
+    <list default="true" id="933c7d55-3ab0-452a-82c5-24dda4bcd800" name="Default Changelist" comment="" />
+>>>>>>> Stashed changes
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -107,6 +111,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+<<<<<<< Updated upstream
     <configuration name="Server" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="main.Server" />
       <module name="udp-echo" />
@@ -133,6 +138,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+=======
+>>>>>>> Stashed changes
     <recent_temporary>
       <list>
         <item itemvalue="Application.Httpc" />
@@ -157,6 +164,7 @@
       <workItem from="1606142132698" duration="11000" />
       <workItem from="1606175337434" duration="4191000" />
       <workItem from="1606253357668" duration="7296000" />
+      <workItem from="1606315470357" duration="4000" />
     </task>
     <servers />
   </component>
