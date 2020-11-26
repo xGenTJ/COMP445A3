@@ -23,7 +23,7 @@ public class UDPClient {
 
     private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
-    public static long threeWayHandShake(SocketAddress routerAddr, InetSocketAddress serverAddr, long numberOfPackets) throws Exception
+    public static long threeWayHandShake(SocketAddress routerAddr, InetSocketAddress serverAddr, String numberOfPackets) throws Exception
     {
         try(DatagramChannel channel = DatagramChannel.open()){
 
@@ -67,20 +67,17 @@ public class UDPClient {
 
             if (resp.getType() != 2)
             {
-                System.out.println("DID NOT RECEIVE A SYN-ACK");
+                logger.info("DID NOT RECEIVE A SYN-ACK");
 
             }
             else
             {
-                System.out.println("SYN-ACK RECEIVED");
+                logger.info("SYN-ACK RECEIVED");
                 responseSequence = resp.getSequenceNumber();
-                System.out.println("Sequence Number from Server: " + resp.getSequenceNumber());
+                logger.info("Sequence Number from Server: " + resp.getSequenceNumber());
 
-                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(numberOfPackets);
 
                 keys.clear();
-                channel.configureBlocking(true);
 
 
                 Packet ACKPacket = new Packet.Builder()
@@ -88,7 +85,7 @@ public class UDPClient {
                         .setSequenceNumber(responseSequence + 1)
                         .setPortNumber(serverAddr.getPort())
                         .setPeerAddress(serverAddr.getAddress())
-                        .setPayload(buffer.array())
+                        .setPayload(numberOfPackets.getBytes())
                         .create();
 
                 channel.send(ACKPacket.toBuffer(), routerAddr);
@@ -106,12 +103,12 @@ public class UDPClient {
             int index = 0;
             List<Packet> packetList = new ArrayList();
             List<Packet> window = new ArrayList();
-            List<Long> UNACKNumbers = new ArrayList();
             int maxWindowSize = 2;
             int availableWindowSize = 2;
 
             //while not done sending
             while (true) {
+
                 //create a list of packets to send
                 for (byte[] b : outputByteList) {
 
@@ -122,7 +119,7 @@ public class UDPClient {
                             .setPeerAddress(serverAddr.getAddress())
                             .setPayload(b)
                             .create());
-
+                    sequenceNumber++;
                 }
 
                 //load packets in window
@@ -132,45 +129,47 @@ public class UDPClient {
                     availableWindowSize--;
                 }
 
-                //send all the packets in window
+
+                //send all the packets in window that haven't been sent before
                 for (Packet p : window) {
-                    channel.send(p.toBuffer(), routerAddr);
-                    UNACKNumbers.add(p.getSequenceNumber());
+                    if (!p.isSent())
+                    {
+                        channel.send(p.toBuffer(), routerAddr);
+                        p.setSent(true);
+                    }
                 }
 
                 logger.info("Sending packet sequence number \"{}\" to router at {}", sequenceNumber, routerAddr);
                 logger.info("Waiting for the response");
+
                 Selector selector = Selector.open();
                 channel.configureBlocking(false);
                 channel.register(selector, OP_READ);
                 selector.select(5000);
                 Set<SelectionKey> keys = selector.selectedKeys();
 
-                // if no response came thru
-                if (keys.isEmpty()) {
-                    continue;
+                // if no response came thru, send all again and wait 5 sec
+                while (keys.isEmpty()) {
+                    for (Packet p : window) {
+                        channel.send(p.toBuffer(), routerAddr);
+                    }
+                    selector.select(5000);
                 }
-                //TODO implement selective repeat here
 
+                //TODO understand if we analyze them one at a time
                 //get ACK for first data packet and remove from the unacked list
                 Packet responsePacket = recvPacket(channel);
-                long firstUnacked = UNACKNumbers.get(0);
-                long ACKsequenceNumber = responsePacket.getSequenceNumber();
 
-                //if the first unacked number is acked, increase window size and send a new packet
-                if (ACKsequenceNumber == firstUnacked)
+                //if the first unacked number is acked, remove it and add a spot on the window
+                if (responsePacket.getSequenceNumber() == window.get(0).getSequenceNumber())
                 {
-                    UNACKNumbers.remove(ACKsequenceNumber);
-
-                    //available window size is equal to max window size minus the number of UNACK'd packets
-                    availableWindowSize = maxWindowSize - UNACKNumbers.size();
+                    window.remove(window.get(0));
+                    availableWindowSize = maxWindowSize - window.size();
                 }
 
-                //if the first unacked number is not acked, loop until it is
-                else
-                {
-                    UNACKNumbers.remove(ACKsequenceNumber);
-                }
+                // if received sequence number is not the first unacked number, remove the packet but dont increase window size
+                window.removeIf(p -> responsePacket.getSequenceNumber() == p.getSequenceNumber());
+
 
             }
 
@@ -265,7 +264,7 @@ public class UDPClient {
             }
         }
 
-        // if there is a leftover of size < 4: put in list
+        // if there is a leftover of size < 1013: put in list
         if (byteArray.length % 1013 != 0) {
             bytelist.add(packetByteOutput);
         }

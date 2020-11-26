@@ -21,6 +21,18 @@ public class Packet {
     private final int peerPort;
     private final byte[] payload;
 
+    private boolean acked = false;
+
+    public boolean isSent() {
+        return sent;
+    }
+
+    public void setSent(boolean sent) {
+        this.sent = sent;
+    }
+
+    private boolean sent = false;
+
     public Packet(int type, long sequenceNumber, InetAddress peerAddress, int peerPort, byte[] payload) {
         this.type = type;
         this.sequenceNumber = sequenceNumber;
@@ -117,6 +129,14 @@ public class Packet {
         builder.setPayload(payload);
 
         return builder.create();
+    }
+
+    public boolean isAcked() {
+        return acked;
+    }
+
+    public void setAcked(boolean acked) {
+        this.acked = acked;
     }
 
     /**

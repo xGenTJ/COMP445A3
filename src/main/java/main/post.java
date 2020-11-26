@@ -119,7 +119,7 @@ final public class post implements Runnable{
                 long sequenceNumber = 0;
 
                 try {
-                    sequenceNumber = UDPClient.threeWayHandShake(routerAddress, serverAddress, bytelist.size());
+                    sequenceNumber = UDPClient.threeWayHandShake(routerAddress, serverAddress, Integer.toString(bytelist.size()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

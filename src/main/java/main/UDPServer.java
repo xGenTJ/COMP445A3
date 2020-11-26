@@ -18,10 +18,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -57,11 +54,17 @@ public class UDPServer {
     private void listenAndServe(int port) throws IOException {
 
         try (DatagramChannel channel = DatagramChannel.open()) {
+
+
             channel.bind(new InetSocketAddress(port));
             logger.info("EchoServer is listening at {}", channel.getLocalAddress());
             ByteBuffer buf = ByteBuffer
                     .allocate(Packet.MAX_LEN)
                     .order(ByteOrder.BIG_ENDIAN);
+            boolean sentSYNACK = false;
+            int numberOfDataPacketsReceived = 0;
+            int numberOfExpectedDataPackets = 0;
+
 
             for (; ; ) {
                 buf.clear();
@@ -69,25 +72,53 @@ public class UDPServer {
 
                 // Parse a packet from the received raw data.
                 buf.flip();
-                Packet packet = Packet.fromBuffer(buf);
+                Packet recvPacket = Packet.fromBuffer(buf);
                 buf.flip();
 
-                String payload = new String(packet.getPayload(), UTF_8);
-                logger.info("Packet: {}", packet);
+                String payload = new String(recvPacket.getPayload(), UTF_8);
+                logger.info("Packet: {}", recvPacket);
                 logger.info("Payload: {}", payload);
                 logger.info("Router: {}", router);
 
-                inputPayload += payload;
+
                 // Send the response to the router not the client.
                 // The peer address of the packet is the address of the client already.
                 // We can use toBuilder to copy properties of the current packet.
                 // This demonstrate how to create a new packet from an existing packet.
-                Packet SYNACK = new Packet.Builder()
-                        .setType(2)
-                        .setSequenceNumber(0)
-                        .setPayload(new byte[0])
-                        .create();
-                channel.send(SYNACK.toBuffer(), router);
+                if (recvPacket.getType() == 1) // if it's an SYN
+                {
+                    if (!sentSYNACK)
+                    {
+                        Packet SYNACK = recvPacket.toBuilder()
+                                .setType(2)
+                                .setSequenceNumber(0)
+                                .setPayload(new byte[0])
+                                .create();
+                        channel.send(SYNACK.toBuffer(), router);
+                        sentSYNACK = true;
+                    }
+                }
+                else if (recvPacket.getType() == 3) //if it's an ACK
+                {
+                    numberOfExpectedDataPackets =  Integer. parseInt(payload);
+                }
+                else if (recvPacket.getType() == 0) //if it's an ACK
+                {
+                    inputPayload += payload;
+                    numberOfDataPacketsReceived++;
+
+                }
+
+                if (numberOfDataPacketsReceived == numberOfExpectedDataPackets) //if all the data packets have been received, then process the request
+                {
+//                    getRequest(inputPayload);
+//                    Packet response = recvPacket.toBuilder()
+//                            .setType(0)
+//                            .setSequenceNumber(0)
+//                            .setPayload(sendResponse(StatusCode.OK, "1.0", true, "", "", "").getBytes())
+//                            .create();
+//                    channel.send(SYNACK.toBuffer(), router);
+                }
 
             }
         }
@@ -386,7 +417,7 @@ public class UDPServer {
         }
     }
 
-    public void sendResponse(StatusCode statusCode, String httpVersion, Boolean headerExists, String headers, String fileDir, String returnBody) throws IOException {
+    public List<byte[]> sendResponse(StatusCode statusCode, String httpVersion, Boolean headerExists, String headers, String fileDir, String returnBody) throws IOException {
         String response = "";
 
         LocalDateTime date = LocalDateTime.now();
@@ -405,15 +436,61 @@ public class UDPServer {
 
         System.out.println(response);
 
-//        wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-//        System.out.println("SENDING RESPONSE...");
-//        wr.write(response);
-//
-//        if (returnBody.trim().length() > 0) {
-//            wr.write( returnBody);
-//        }
-//
-//        wr.flush();
-//        wr.close();
+        byte[] packetByteOutput = new byte[1013];
+        List<byte[]> bytelist = new ArrayList<>();
+
+        //sending data
+        byte[] byteArray = response.getBytes();
+        int i = 0;
+
+        for (byte b : byteArray) {
+            if (i < 1013) {
+                packetByteOutput[i] = b;
+                i++;
+            } else    //when i reaches 4
+            {
+                bytelist.add(packetByteOutput);
+
+                //reset i and packetByte
+                i = 0;
+                packetByteOutput = new byte[1013];
+                packetByteOutput[i] = b;
+            }
+        }
+
+        // if there is a leftover of size < 1013: put in list
+        if (byteArray.length % 1013 != 0) {
+            bytelist.add(packetByteOutput);
+        }
+
+        return bytelist;
+
+    }
+
+    private static Packet recvPacket(DatagramChannel channel) throws IOException {
+
+        // Try to receive a packet within timeout.
+        channel.configureBlocking(false);
+        Selector selector = Selector.open();
+        channel.register(selector, OP_READ);
+        logger.info("Waiting for the response");
+        selector.select(5000);
+
+        Set<SelectionKey> keys = selector.selectedKeys();
+        if(keys.isEmpty()){
+            logger.error("No response after timeout");
+//            return "";
+        }
+        // We just want a single response.
+        ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        SocketAddress router = channel.receive(buf);
+        buf.flip();
+        Packet resp = Packet.fromBuffer(buf);
+//            logger.info("Packet: {}", resp);
+//            logger.info("Router: {}", router);
+//            logger.info("Payload: {}",  payload);
+        String payload = new String(resp.getPayload(), StandardCharsets.UTF_8);
+        keys.clear();
+        return resp;
     }
 }

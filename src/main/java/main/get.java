@@ -71,7 +71,7 @@ final public class get implements Runnable{
 //                String path, LinkedHashMap<String,String> headers, String address, String  query, boolean fileServer
                 UDPClient.createGET(path, headers, host, query, fileServer);
             } catch (Exception e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 StatusCode statusCode = StatusCode.BAD_REQUEST;
                 System.out.println("HTTP/1.0 " + statusCode.code + " " + statusCode.phrase);
                 System.exit(0);
@@ -91,7 +91,7 @@ final public class get implements Runnable{
                 long sequenceNumber = 0;
 
                 try {
-                    sequenceNumber = UDPClient.threeWayHandShake(routerAddress, serverAddress, bytelist.size());
+                    sequenceNumber = UDPClient.threeWayHandShake(routerAddress, serverAddress, Integer.toString(bytelist.size()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -99,7 +99,7 @@ final public class get implements Runnable{
 
 
             } catch (Exception e) {
-                //                e.printStackTrace();
+                                e.printStackTrace();
                 StatusCode statusCode = StatusCode.BAD_REQUEST;
                 System.out.println("HTTP/1.0 " + statusCode.code + " " + statusCode.phrase);
                 System.exit(0);
