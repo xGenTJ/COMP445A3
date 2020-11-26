@@ -35,6 +35,7 @@ public class UDPClient {
                     .setSequenceNumber(0)
                     .setPortNumber(serverAddr.getPort())
                     .setPeerAddress(serverAddr.getAddress())
+                    .setPayload(new byte[0])
                     .create();
             channel.send(SYNPack.toBuffer(), routerAddr);
 
@@ -188,7 +189,7 @@ public class UDPClient {
         Set<SelectionKey> keys = selector.selectedKeys();
         if(keys.isEmpty()){
             logger.error("No response after timeout");
-            return "";
+//            return "";
         }
         // We just want a single response.
         ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
@@ -381,17 +382,17 @@ public class UDPClient {
         SocketAddress routerAddress = new InetSocketAddress(routerHost, routerPort);
         InetSocketAddress serverAddress = new InetSocketAddress(serverHost, serverPort);
 
-        long sequenceNumber = 0;
-        List<byte[]> bytelist = createGET();
-        long numberOfPackets = createGET().size();
-
-
-        try {
-            sequenceNumber = threeWayHandShake(routerAddress, serverAddress, numberOfPackets);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        sendDataPacket(routerAddress, serverAddress, bytelist);
+//        long sequenceNumber = 0;
+//        List<byte[]> bytelist = createGET();
+//        long numberOfPackets = createGET().size();
+//
+//
+//        try {
+//            sequenceNumber = threeWayHandShake(routerAddress, serverAddress, numberOfPackets);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        sendDataPacket(routerAddress, serverAddress, bytelist);
 
     }
 
