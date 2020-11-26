@@ -42,6 +42,18 @@ public class UDPServer {
         SocketAddress routerAddress = new InetSocketAddress(hostName, 3000);
     }
 
+    public static void main(String[] args) throws IOException {
+        OptionParser parser = new OptionParser();
+        parser.acceptsAll(asList("port", "p"), "Listening port")
+                .withOptionalArg()
+                .defaultsTo("8007");
+
+        OptionSet opts = parser.parse(args);
+        int port = Integer.parseInt((String) opts.valueOf("port"));
+        UDPServer server = new UDPServer("127.0.0.1", 8007);
+        server.listenAndServe(port);
+    }
+
     private void listenAndServe(int port) throws IOException {
 
         try (DatagramChannel channel = DatagramChannel.open()) {
@@ -70,26 +82,18 @@ public class UDPServer {
                 // The peer address of the packet is the address of the client already.
                 // We can use toBuilder to copy properties of the current packet.
                 // This demonstrate how to create a new packet from an existing packet.
-                Packet resp = packet.toBuilder()
-                        .setPayload(payload.getBytes())
+                Packet SYNACK = new Packet.Builder()
+                        .setType(2)
+                        .setSequenceNumber(0)
+                        .setPayload(new byte[0])
                         .create();
-                channel.send(resp.toBuffer(), router);
+                channel.send(SYNACK.toBuffer(), router);
 
             }
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        OptionParser parser = new OptionParser();
-        parser.acceptsAll(asList("port", "p"), "Listening port")
-                .withOptionalArg()
-                .defaultsTo("8007");
 
-        OptionSet opts = parser.parse(args);
-        int port = Integer.parseInt((String) opts.valueOf("port"));
-        UDPServer server = new UDPServer("127.0.0.1", 8007);
-        server.listenAndServe(port);
-    }
 
     public void getRequest(String request) throws IOException {
         try {
