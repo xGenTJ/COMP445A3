@@ -14,11 +14,16 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Scanner;
+import java.util.Set;
 
+import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 
@@ -30,6 +35,12 @@ public class UDPServer {
     private String request = "";
     private int portN;
     private LinkedHashMap<String, String> headersMap = new LinkedHashMap<>();
+
+    public UDPServer (String hostName, int portNumber){
+        System.out.println("UDP Server Constructor");
+        InetSocketAddress serverAddress = new InetSocketAddress(hostName, portNumber);
+        SocketAddress routerAddress = new InetSocketAddress(hostName, 3000);
+    }
 
     private void listenAndServe(int port) throws IOException {
 
@@ -76,7 +87,7 @@ public class UDPServer {
 
         OptionSet opts = parser.parse(args);
         int port = Integer.parseInt((String) opts.valueOf("port"));
-        UDPServer server = new UDPServer();
+        UDPServer server = new UDPServer("127.0.0.1", 8007);
         server.listenAndServe(port);
     }
 

@@ -23,7 +23,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="933c7d55-3ab0-452a-82c5-24dda4bcd800" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/main/Server.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/Httpc.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/Httpc.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/UDPServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/get.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/get.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/post.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/main/post.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/main/runner.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/main/UDPClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/main/UDPClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/main/UDPServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/main/UDPServer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/main/runner.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +82,7 @@
       <recent name="C:\Users\Tao\Repos\COMP445A3\COMP445A3" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.runner">
+  <component name="RunManager" selected="Application.Httpc">
     <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
@@ -83,8 +94,21 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="runner" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="main.runner" />
+    <configuration name="Httpc" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="main.Httpc" />
+      <module name="udp-echo" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="main.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Server" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="main.Server" />
       <module name="udp-echo" />
       <extension name="coverage">
         <pattern>
@@ -111,7 +135,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.runner" />
+        <item itemvalue="Application.Httpc" />
+        <item itemvalue="Application.Server" />
         <item itemvalue="Application.test" />
       </list>
     </recent_temporary>
@@ -167,25 +192,25 @@
       <screen x="0" y="0" width="2048" height="1152" />
     </state>
     <state x="805" y="331" key="FileChooserDialogImpl/0.0.2048.1152/2560.0.1920.1080@0.0.2048.1152" timestamp="1606090754821" />
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom" timestamp="1606334512679">
+    <state width="1877" height="331" key="GridCell.Tab.0.bottom" timestamp="1606351371610">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606334512679" />
+    <state width="1877" height="331" key="GridCell.Tab.0.bottom/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606351371610" />
     <state width="2005" height="318" key="GridCell.Tab.0.bottom/0.0.2048.1152/2560.0.1920.1080@0.0.2048.1152" timestamp="1606002168233" />
-    <state width="1877" height="282" key="GridCell.Tab.0.center" timestamp="1606334512679">
+    <state width="1877" height="331" key="GridCell.Tab.0.center" timestamp="1606351371610">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.center/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606334512679" />
+    <state width="1877" height="331" key="GridCell.Tab.0.center/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606351371610" />
     <state width="2005" height="318" key="GridCell.Tab.0.center/0.0.2048.1152/2560.0.1920.1080@0.0.2048.1152" timestamp="1606002168233" />
-    <state width="1877" height="282" key="GridCell.Tab.0.left" timestamp="1606334512679">
+    <state width="1877" height="331" key="GridCell.Tab.0.left" timestamp="1606351371609">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.left/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606334512679" />
+    <state width="1877" height="331" key="GridCell.Tab.0.left/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606351371609" />
     <state width="2005" height="318" key="GridCell.Tab.0.left/0.0.2048.1152/2560.0.1920.1080@0.0.2048.1152" timestamp="1606002168233" />
-    <state width="1877" height="282" key="GridCell.Tab.0.right" timestamp="1606334512679">
+    <state width="1877" height="331" key="GridCell.Tab.0.right" timestamp="1606351371610">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.right/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606334512679" />
+    <state width="1877" height="331" key="GridCell.Tab.0.right/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1606351371610" />
     <state width="2005" height="318" key="GridCell.Tab.0.right/0.0.2048.1152/2560.0.1920.1080@0.0.2048.1152" timestamp="1606002168233" />
     <state x="2410" y="175" key="Maven.ArtifactSearchDialog" timestamp="1606334160048">
       <screen x="1920" y="0" width="1920" height="1040" />

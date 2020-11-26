@@ -35,6 +35,7 @@ public class UDPClient {
                     .setSequenceNumber(0)
                     .setPortNumber(serverAddr.getPort())
                     .setPeerAddress(serverAddr.getAddress())
+                    .setPayload(new byte[0])
                     .create();
             channel.send(SYNPack.toBuffer(), routerAddr);
 

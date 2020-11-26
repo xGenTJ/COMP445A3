@@ -53,9 +53,9 @@ final public class Httpc implements Runnable{
                 System.exit(exitCode);
             }
             String[] parsedInput = input.split(" ");                              //parse string input to feed to cmd line httpc constructor
-            for (String element: parsedInput) {
-                System.out.println(element);
-            }
+//            for (String element: parsedInput) {
+//                System.out.println(element);
+//            }
             int exitCode = new CommandLine(new Httpc()).execute(parsedInput);
             System.exit(exitCode);
         }

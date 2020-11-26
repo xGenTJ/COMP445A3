@@ -82,9 +82,10 @@ final public class get implements Runnable{
             try {
                 List<byte[]> bytelist = UDPClient.createGET(path, headers, host, query, fileServer);
                 //    initiliaze ports
-                SocketAddress routerAddress = new InetSocketAddress("192.168.2.10", 3000);
-                InetSocketAddress serverAddress = new InetSocketAddress("192.168.2.3", 8007);
-                InetSocketAddress clientAddress = new InetSocketAddress("192.168.2.125", 41830);
+                SocketAddress routerAddress = new InetSocketAddress("127.0.0.1", 3000);
+                InetSocketAddress serverAddress = new InetSocketAddress("127.0.0.1", 8007);
+                InetSocketAddress clientAddress = new InetSocketAddress("127.0.0.1", 41830);
+
 
                 //    3 way dick shake
                 long sequenceNumber = 0;
